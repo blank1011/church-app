@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import StatCard from '../StatCard'
-import AreaTrend from '../AreaTrend'
 import { useSettings } from '../../context/SettingsContext'
 
 const cardClass = 'bg-surface rounded-3xl border border-line p-4'
@@ -52,12 +51,8 @@ export default function ReportPage() {
   const monthName = new Date(year, month - 1, 1)
     .toLocaleDateString('en-PH', { month: 'long', year: 'numeric' })
 
-  const trend = (report?.services || []).map(s => ({
-    label: new Date(s.date).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' }),
-    value: s.total,
-  }))
-
   const alloc = allocations || {}
+  const tithesOffering = report?.tithesOffering || 0
 
   return (
     <div className="space-y-4">
@@ -79,13 +74,13 @@ export default function ReportPage() {
 
       {loading ? (
         <div className="py-16 text-center text-sm text-muted">Loading report...</div>
-      ) : !report || report.tithesOffering === 0 ? (
+      ) : !report || tithesOffering === 0 ? (
         <div className={`${cardClass} py-16 text-center`}>
           <p className="text-sm text-muted">No data recorded for {monthName}.</p>
         </div>
       ) : (
         <>
-          {/* Hero total + trend chart */}
+          {/* Hero total */}
           <div className="relative overflow-hidden rounded-3xl border border-line bg-surface p-5">
             <div
               className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full blur-3xl"
@@ -94,31 +89,26 @@ export default function ReportPage() {
             <div className="relative">
               <p className="text-xs text-muted">Tithes &amp; Offering · {monthName}</p>
               <p className="mt-1 text-3xl font-bold text-content tracking-tight">
-                ₱{report.tithesOffering.toLocaleString()}
+                ₱{tithesOffering.toLocaleString()}
               </p>
-              <div className="mt-3 -mx-1">
-                {trend.length > 0 && (
-                  <AreaTrend data={trend} height={80} showAxes gradientId="reportFill" />
-                )}
-              </div>
             </div>
           </div>
 
           {/* Stats */}
           <div className="grid grid-cols-3 gap-2.5">
-            <StatCard label="Services" value={report.serviceCount} sub="This month" />
-            <StatCard label="Givers" value={report.uniqueGivers} sub="Unique" />
-            <StatCard label="Total" value={`₱${report.tithesOffering.toLocaleString()}`} sub="Base" accent />
+            <StatCard label="Services" value={report.serviceCount || 0} sub="This month" />
+            <StatCard label="Givers" value={report.uniqueGivers || 0} sub="Unique" />
+            <StatCard label="Total" value={`₱${tithesOffering.toLocaleString()}`} sub="Base" accent />
           </div>
 
-          {/* Allocations — dynamic from settings */}
+          {/* Allocations */}
           <div className={cardClass}>
             <p className={sectionLabel}>Allocations this month</p>
             <div className="grid grid-cols-2 gap-3">
               {Object.entries(alloc).map(([key, percent]) => {
                 const label = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
-                const base = report.tithesOffering * (percent / 100)
-                const specific = (report.specificByType?.[key] || 0)
+                const base = tithesOffering * ((percent || 0) / 100)
+                const specific = report.specificByType?.[key] || 0
                 const total = base + specific
                 return (
                   <div key={key} className="bg-surface-2 rounded-2xl p-3.5 border-l-4 border-accent">
@@ -140,15 +130,15 @@ export default function ReportPage() {
           <div className={cardClass}>
             <p className={sectionLabel}>Services this month</p>
             <div className="space-y-2">
-              {report.services.map((s, i) => {
+              {(report.services || []).map((s, i) => {
                 const { label, date } = formatService(s)
                 return (
                   <div key={i} className="flex items-center justify-between p-3 bg-surface-2 rounded-2xl">
                     <div>
                       <p className="text-sm text-content">{label}</p>
-                      <p className="text-xs text-muted mt-0.5">{date} · {s.entryCount} entries</p>
+                      <p className="text-xs text-muted mt-0.5">{date} · {s.entryCount || 0} entries</p>
                     </div>
-                    <p className="text-sm font-semibold text-content">₱{s.total.toLocaleString()}</p>
+                    <p className="text-sm font-semibold text-content">₱{(s.total || 0).toLocaleString()}</p>
                   </div>
                 )
               })}
