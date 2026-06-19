@@ -1,37 +1,49 @@
 import connectDB from '@/lib/mongodb'
-import Giving from '@/models/Giving'
 import Service from '@/models/Service'
 
-export async function GET(request) {
+export async function GET() {
+  try {
+    await connectDB()
+    const services = await Service.find().sort({ date: -1 })
+    return Response.json(Array.isArray(services) ? services : [])
+  } catch (error) {
+    return Response.json([], { status: 500 })
+  }
+}
+
+export async function POST(request) {
+  try {
+    await connectDB()
+    const body = await request.json()
+
+    const startOfDay = new Date(body.date)
+    startOfDay.setHours(0, 0, 0, 0)
+    const endOfDay = new Date(body.date)
+    endOfDay.setHours(23, 59, 59, 999)
+
+    let service = await Service.findOne({
+      serviceType: body.serviceType,
+      date: { $gte: startOfDay, $lte: endOfDay }
+    })
+
+    if (!service) {
+      service = await Service.create(body)
+    }
+
+    return Response.json(service, { status: 201 })
+  } catch (error) {
+    return Response.json({ error: error.message }, { status: 500 })
+  }
+}
+
+export async function DELETE(request) {
   try {
     await connectDB()
     const { searchParams } = new URL(request.url)
-    const search = searchParams.get('search') || ''
-
-    const query = search
-      ? { giverName: { $regex: search, $options: 'i' } }
-      : {}
-
-    const givings = await Giving.find(query).sort({ createdAt: -1 })
-
-    const serviceIds = [...new Set(givings.map(g => g.serviceId?.toString()).filter(Boolean))]
-    const services = await Service.find({ _id: { $in: serviceIds } })
-    
-    const serviceMap = {}
-    services.forEach(s => { serviceMap[s._id.toString()] = s })
-
-    const result = givings.map(g => ({
-      _id: g._id,
-      giverName: g.giverName,
-      amount: g.amount,
-      givingType: g.givingType,
-      createdAt: g.createdAt,
-      service: (g.serviceId && serviceMap[g.serviceId.toString()]) ? serviceMap[g.serviceId.toString()] : null
-    }))
-
-    return Response.json(result)
+    const id = searchParams.get('id')
+    await Service.findByIdAndDelete(id)
+    return Response.json({ success: true })
   } catch (error) {
-    console.error("Error in /api/services:", error)
     return Response.json({ error: error.message }, { status: 500 })
   }
 }
