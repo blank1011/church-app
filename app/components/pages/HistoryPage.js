@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { Search } from 'lucide-react'
 import Badge from '../Badge'
+import ConfirmModal from '../ConfirmModal'
 
 const cardClass = 'bg-surface rounded-3xl border border-line p-4'
 const sectionLabel = 'text-xs uppercase tracking-wide text-muted mb-3'
@@ -10,6 +11,7 @@ export default function HistoryPage() {
   const [givings, setGivings] = useState([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
+  const [modal, setModal] = useState({ open: false, title: '', message: '', onConfirm: null })
 
   useEffect(() => {
     fetchHistory()
@@ -32,6 +34,20 @@ export default function HistoryPage() {
     fetchHistory(value)
   }
 
+  function confirmDelete(id, name) {
+    setModal({
+      open: true,
+      title: 'Delete Giving',
+      message: `Delete this giving record for "${name}"? This will affect monthly computations.`,
+      onConfirm: async () => {
+        setModal({ open: false })
+        await fetch(`/api/givings?id=${id}`, { method: 'DELETE' })
+        // Smooth remove from UI instantly
+        setGivings(prev => prev.filter(g => g._id !== id))
+      }
+    })
+  }
+
   function formatDate(dateStr) {
     return new Date(dateStr).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })
   }
@@ -48,6 +64,14 @@ export default function HistoryPage() {
 
   return (
     <div className="space-y-4">
+
+      <ConfirmModal
+        isOpen={modal.open}
+        title={modal.title}
+        message={modal.message}
+        onConfirm={modal.onConfirm}
+        onCancel={() => setModal({ open: false })}
+      />
 
       {/* Search */}
       <div className={cardClass}>
@@ -82,7 +106,8 @@ export default function HistoryPage() {
           <>
             <div className="space-y-1">
               {givings.map((g, i) => (
-                <div key={i} className="flex items-center gap-3 rounded-2xl px-2 py-2.5 hover:bg-surface-2 transition-colors">
+                <div key={g._id || i}
+                  className="flex items-center gap-3 rounded-2xl px-2 py-2.5 hover:bg-surface-2 transition-colors group">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-accent"
                     style={{ backgroundColor: 'var(--accent-soft)' }}>
                     {g.giverName?.charAt(0)?.toUpperCase() || '?'}
@@ -98,6 +123,11 @@ export default function HistoryPage() {
                   <p className="w-20 text-right text-sm font-medium text-content shrink-0">
                     ₱{g.amount.toLocaleString()}
                   </p>
+                  <button
+                    onClick={() => confirmDelete(g._id, g.giverName)}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity text-muted hover:text-danger p-1 rounded-lg hover:bg-danger-soft shrink-0">
+                    ✕
+                  </button>
                 </div>
               ))}
             </div>
