@@ -1,0 +1,131 @@
+@import "tailwindcss";
+@import "react-datepicker/dist/react-datepicker.css";
+
+@variant dark (&:where(.dark, .dark *));
+
+/* ============================================================
+   Design tokens — semantic colors that flip between light/dark.
+   Use the Tailwind utilities they generate (bg-surface, text-muted,
+   text-accent, border-line, etc.) instead of hardcoded colors.
+   ============================================================ */
+:root {
+  color-scheme: light;
+
+  --bg: #eef2f6;            /* app background */
+  --bg-gradient: #e3eaf1;
+  --surface: #ffffff;       /* cards */
+  --surface-2: #f4f7fa;     /* inset panels / inputs */
+  --surface-3: #eaeff4;     /* hover */
+  --line: #e4e9ef;          /* borders */
+  --content: #0f1b2d;       /* primary text */
+  --content-soft: #475569;  /* secondary text */
+  --muted: #8a97a8;         /* tertiary / labels */
+
+  --accent: #0bb5c9;        /* cyan */
+  --accent-strong: #0894a6;
+  --accent-contrast: #ffffff;
+  --accent-soft: rgba(11, 181, 201, 0.12);
+
+  --danger: #ef4458;        /* red (sell / expense / delete) */
+  --danger-soft: rgba(239, 68, 88, 0.12);
+  --positive: #16b981;      /* green (gains) */
+  --positive-soft: rgba(22, 185, 129, 0.12);
+}
+
+html.dark {
+  color-scheme: dark;
+
+  --bg: #0a0e14;            /* deep near-black navy */
+  --bg-gradient: #0d141d;
+  --surface: #141b24;       /* cards */
+  --surface-2: #1b242f;     /* inset panels / inputs */
+  --surface-3: #232e3b;     /* hover */
+  --line: #232e3b;          /* borders */
+  --content: #e8eef5;       /* primary text */
+  --content-soft: #aab6c5;  /* secondary text */
+  --muted: #6b7888;         /* tertiary / labels */
+
+  --accent: #22d3ee;        /* bright cyan */
+  --accent-strong: #38dcf2;
+  --accent-contrast: #04141a;
+  --accent-soft: rgba(34, 211, 238, 0.14);
+
+  --danger: #fb5b6b;
+  --danger-soft: rgba(251, 91, 107, 0.16);
+  --positive: #34d399;
+  --positive-soft: rgba(52, 211, 153, 0.16);
+}
+
+/* Map tokens to Tailwind v4 color utilities (bg-*, text-*, border-*, etc.) */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-line: var(--line);
+  --color-content: var(--content);
+  --color-content-soft: var(--content-soft);
+  --color-muted: var(--muted);
+
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-contrast: var(--accent-contrast);
+  --color-accent-soft: var(--accent-soft);
+
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-positive: var(--positive);
+  --color-positive-soft: var(--positive-soft);
+}
+
+html {
+  background:
+    radial-gradient(120% 80% at 50% 0%, var(--bg-gradient) 0%, var(--bg) 55%);
+  background-attachment: fixed;
+  min-height: 100%;
+}
+
+body {
+  color: var(--content);
+}
+
+.safe-area-pb {
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
+}
+
+/* Hide number input spinners for a cleaner look */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* react-datepicker dark-mode friendliness */
+.react-datepicker {
+  border-color: var(--line) !important;
+  background-color: var(--surface) !important;
+  color: var(--content) !important;
+  font-family: inherit;
+}
+.react-datepicker__header {
+  background-color: var(--surface-2) !important;
+  border-color: var(--line) !important;
+}
+.react-datepicker__current-month,
+.react-datepicker__day-name,
+.react-datepicker__day {
+  color: var(--content) !important;
+}
+.react-datepicker__day:hover {
+  background-color: var(--surface-3) !important;
+}
+.react-datepicker__day--selected,
+.react-datepicker__day--keyboard-selected {
+  background-color: var(--accent) !important;
+  color: var(--accent-contrast) !important;
+}
