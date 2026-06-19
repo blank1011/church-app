@@ -1,57 +1,37 @@
 import connectDB from '@/lib/mongodb'
-import mongoose from 'mongoose'
+import Giving from '@/models/Giving'
+import Service from '@/models/Service'
 
-const SettingsSchema = new mongoose.Schema({
-  churchName: { type: String, default: 'Tolosa Church' },
-  allocations: { type: Map, of: Number, default: {
-    pastoralTithe: 20,
-    electricBill: 20,
-    missionMyanmar: 20,
-    conferencePledge: 20,
-  }},
-  accentColor: { type: String, default: '#185FA5' },
-}, { timestamps: true })
-
-const Settings = mongoose.models.Settings || mongoose.model('Settings', SettingsSchema)
-
-export async function GET() {
+export async function GET(request) {
   try {
     await connectDB()
-    let settings = await Settings.findOne()
-    if (!settings) settings = await Settings.create({})
-    return Response.json({
-      _id: settings._id,
-      churchName: settings.churchName,
-      accentColor: settings.accentColor,
-      allocations: Object.fromEntries(settings.allocations),
-      createdAt: settings.createdAt,
-      updatedAt: settings.updatedAt,
-    })
-  } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 })
-  }
-}
+    const { searchParams } = new URL(request.url)
+    const search = searchParams.get('search') || ''
 
-export async function PUT(request) {
-  try {
-    await connectDB()
-    const body = await request.json()
-    const settings = await Settings.findOneAndUpdate(
-      {},
-      {
-        churchName: body.churchName,
-        allocations: body.allocations,
-        accentColor: body.accentColor,
-      },
-      { new: true, upsert: true }
-    )
-    return Response.json({
-      _id: settings._id,
-      churchName: settings.churchName,
-      accentColor: settings.accentColor,
-      allocations: Object.fromEntries(settings.allocations),
-    })
+    const query = search
+      ? { giverName: { $regex: search, $options: 'i' } }
+      : {}
+
+    const givings = await Giving.find(query).sort({ createdAt: -1 })
+
+    const serviceIds = [...new Set(givings.map(g => g.serviceId?.toString()).filter(Boolean))]
+    const services = await Service.find({ _id: { $in: serviceIds } })
+    
+    const serviceMap = {}
+    services.forEach(s => { serviceMap[s._id.toString()] = s })
+
+    const result = givings.map(g => ({
+      _id: g._id,
+      giverName: g.giverName,
+      amount: g.amount,
+      givingType: g.givingType,
+      createdAt: g.createdAt,
+      service: (g.serviceId && serviceMap[g.serviceId.toString()]) ? serviceMap[g.serviceId.toString()] : null
+    }))
+
+    return Response.json(result)
   } catch (error) {
+    console.error("Error in /api/settings:", error)
     return Response.json({ error: error.message }, { status: 500 })
   }
 }

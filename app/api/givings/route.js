@@ -10,6 +10,7 @@ export async function GET(request) {
     const givings = await Giving.find(query).sort({ createdAt: -1 })
     return Response.json(givings)
   } catch (error) {
+    console.error("Error in /api/givings GET:", error)
     return Response.json({ error: error.message }, { status: 500 })
   }
 }
@@ -21,6 +22,7 @@ export async function POST(request) {
     const giving = await Giving.create(body)
     return Response.json(giving, { status: 201 })
   } catch (error) {
+    console.error("Error in /api/givings POST:", error)
     return Response.json({ error: error.message }, { status: 500 })
   }
 }
@@ -31,10 +33,13 @@ export async function DELETE(request) {
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
     const serviceId = searchParams.get('serviceId')
+    
     if (id) await Giving.findByIdAndDelete(id)
     if (serviceId) await Giving.deleteMany({ serviceId })
+    
     return Response.json({ success: true })
   } catch (error) {
+    console.error("Error in /api/givings DELETE:", error)
     return Response.json({ error: error.message }, { status: 500 })
   }
 }

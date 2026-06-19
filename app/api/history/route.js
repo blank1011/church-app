@@ -14,7 +14,9 @@ export async function GET(request) {
 
     const givings = await Giving.find(query).sort({ createdAt: -1 })
 
-    const serviceIds = [...new Set(givings.map(g => g.serviceId.toString()))]
+    // Safe mapping to ensure _id exists
+    const serviceIds = [...new Set(givings.map(g => g.serviceId?.toString()).filter(Boolean))]
+    
     const services = await Service.find({ _id: { $in: serviceIds } })
     const serviceMap = {}
     services.forEach(s => { serviceMap[s._id.toString()] = s })
@@ -25,11 +27,12 @@ export async function GET(request) {
       amount: g.amount,
       givingType: g.givingType,
       createdAt: g.createdAt,
-      service: serviceMap[g.serviceId.toString()] || null
+      service: (g.serviceId && serviceMap[g.serviceId.toString()]) ? serviceMap[g.serviceId.toString()] : null
     }))
 
     return Response.json(result)
   } catch (error) {
+    console.error("Error in /api/history:", error)
     return Response.json({ error: error.message }, { status: 500 })
   }
 }
